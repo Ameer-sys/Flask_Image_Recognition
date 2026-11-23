@@ -94,3 +94,17 @@ def test_missing_image_upload(client):
 
     assert response.status_code == 200
     assert b"File cannot be processed" in response.data
+
+
+@pytest.mark.parametrize("mode", ["L", "RGBA"])
+def test_preprocessing_accepts_non_rgb_images(mode):
+    """Convert valid non-RGB uploads to the model's three-channel input."""
+    image_bytes = BytesIO()
+    with Image.new(mode, (16, 16)) as image:
+        image.save(image_bytes, format="PNG")
+    image_bytes.seek(0)
+
+    processed = preprocess_img(image_bytes)
+
+    assert processed.shape == (1, 224, 224, 3)
+    assert np.allclose(processed, 0.0)
